@@ -1,67 +1,99 @@
 package dev.project.config;
 
 
-import dev.project.jwt.JwtRequestFilter;
-import org.springframework.beans.factory.annotation.Autowired;
+import dev.project.repository.RefreshRepository;
+
+import dev.project.security.CustomLogoutFilter;
+import dev.project.security.JwtUtil;
+import dev.project.security.LoginFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtRequestFilter jwtRequestFilter;
-    private final UserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final JwtUtil jwtUtil;
+    private final RefreshRepository refreshRepository;
 
-    @Autowired
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter, UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        this.jwtRequestFilter = jwtRequestFilter;
-        this.userDetailsService = userDetailsService;
-        this.passwordEncoder = passwordEncoder;
+
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JwtUtil jwtUtil, RefreshRepository refreshRepository, RefreshRepository refreshRepository1) {
+
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtUtil = jwtUtil;
+        this.refreshRepository = refreshRepository1;
     }
 
     @Bean
-    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        authBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
-        return authBuilder.build();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
+
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http.csrf(csrf -> csrf.disable())
-                .authorizeRequests(authz -> authz
-                        .requestMatchers("/", "/signin", "/signup").permitAll()
-                        .anyRequest().authenticated());
-        http.formLogin(auth -> auth
-                .loginPage("/signin").permitAll() // 로그인 처리 URL
-                .loginProcessingUrl("/signin")  // 로그인 폼의 action과 일치해야 함
-                .usernameParameter("email") // 사용자 이름 파라미터 이름
-                .passwordParameter("password") // 패스워드 파라미터 이름
-                .defaultSuccessUrl("/", true)
-                .failureUrl("/signin?error=true"));
-        http.logout(auth -> auth
-                .logoutSuccessUrl("/signin"));
-        http
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http.cors((corsCustomizer -> corsCustomizer.configurationSource(new CorsConfigurationSource() {
+
+            @Override
+            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+
+                CorsConfiguration configuration = new CorsConfiguration();
+
+                configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+                configuration.setAllowedMethods(Collections.singletonList("*"));
+                configuration.setAllowCredentials(true);
+                configuration.setAllowedHeaders(Collections.singletonList("*"));
+                configuration.setMaxAge(3600L);
+
+                configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+
+                return configuration;
+            }
+        })));
+
+        http.csrf(csrf -> csrf.disable());
+
+        http.formLogin(auth -> auth.disable());
+
+        http.httpBasic((auth) -> auth.disable());
+
+        http.authorizeRequests(authz -> authz
+                .requestMatchers("/", "/signin", "/signup", "signout", "/reissue", "/products/**", "order/**").permitAll()
+                .anyRequest().authenticated());
+
+
+        http.addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
+
+        http.addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository), LogoutFilter.class);
+
+
+        http.sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
-
-
 }
 

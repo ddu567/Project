@@ -3,14 +3,11 @@ package dev.project.service;
 import dev.project.entity.Member;
 import dev.project.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,12 +21,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        logger.debug("Loading user by email: {}", email);
-        Optional<Member> memberOptional = memberRepository.findByEmail(email);
-        Member member = memberOptional.orElseThrow(() ->
-                new UsernameNotFoundException("User not found with email: " + email));
+        //DB에서 조회
+        Member memberData = memberRepository.findByEmail(email);
 
-        logger.debug("Found user: {}", member.getEmail());
-        return new User(member.getEmail(), member.getPassword(), new ArrayList<>());
+        if (memberData != null) {
+
+            //UserDetails에 담아서 return하면 AutneticationManager가 검증 함
+            return new CustomUserDetails(memberData);
+        }
+
+        return null;
     }
 }

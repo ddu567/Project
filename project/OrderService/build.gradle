@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':UserService')
+    implementation project(':ProductService')
+    implementation 'org.springframework:spring-context'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -1,1 +1,8 @@
 rootProject.name = 'project'
+include 'UserService'
+include 'OrderService'
+include 'ProductService'
+
+//project(':UserService').projectDir = new File('UserService')
+//project(':OrderService').projectDir = new File('OrderService')
+//project(':ProductService').projectDir = new File('ProductService')

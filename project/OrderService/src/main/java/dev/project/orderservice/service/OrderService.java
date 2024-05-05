@@ -2,77 +2,78 @@ package dev.project.orderservice.service;
 
 import dev.project.orderservice.dto.OrderRequest;
 import dev.project.orderservice.dto.PurchaseRequest;
+import dev.project.orderservice.dto.ProductInfoDTO;
+import dev.project.orderservice.dto.WishListDTO;
+import dev.project.orderservice.entity.Order;
 import dev.project.orderservice.repository.OrderRepository;
 import dev.project.orderservice.client.ProductServiceClient;
-import dev.project.orderservice.repository.WishListRepository;
-import dev.project.orderservice.entity.Order;
-import dev.project.productservice.entity.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
     private final ProductServiceClient productServiceClient;
     private final OrderRepository orderRepository;
-    private final WishListRepository wishListRepository;
 
-    // ProductServiceClient 주입을 통한 외부 서비스와의 통신
     @Autowired
-    public OrderService(ProductServiceClient productServiceClient, OrderRepository orderRepository, WishListRepository wishListRepository) {
+    public OrderService(ProductServiceClient productServiceClient, OrderRepository orderRepository) {
         this.productServiceClient = productServiceClient;
         this.orderRepository = orderRepository;
-        this.wishListRepository = wishListRepository;
     }
 
-    // 제품 ID를 사용하여 제품 정보를 조회하는 메소드
-    public Product fetchProduct(String productId) {
-        return productServiceClient.getProductById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+    // 제품 정보를 조회하여 반환합니다.
+    public ProductInfoDTO fetchProduct(Long productId) {
+        Optional<ProductInfoDTO> productOpt = productServiceClient.getProductById(productId);
+        if (!productOpt.isPresent()) {
+            throw new RuntimeException("Product not found with id: " + productId);
+        }
+        return productOpt.get();
     }
 
-    // 제품 구매를 처리하는 메소드
+    // 제품 구매를 처리합니다.
     public Order purchaseProduct(PurchaseRequest purchaseRequest) {
         Long productId = purchaseRequest.getProductId();
         int quantity = purchaseRequest.getQuantity();
 
-        Product product = productServiceClient.getProductById(productId.toString())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        ProductInfoDTO product = fetchProduct(productId);
 
         if (product.getStock() < quantity) {
             throw new RuntimeException("Insufficient stock for product: " + product.getName());
         }
 
-        // 재고 감소 및 제품 정보 업데이트
+        // 제품 재고 감소 후 업데이트
         product.setStock(product.getStock() - quantity);
-        productServiceClient.updateProduct(productId, product);
+        productServiceClient.updateProduct(product);  // 업데이트 메서드 수정
 
-        // 주문 객체 생성 및 저장
         Order order = new Order();
-        order.setProduct(product);
+        order.setProductId(productId);
         order.setQuantity(quantity);
         order.setOrderDate(LocalDate.now());
         order.setStatus("배송중");
         return orderRepository.save(order);
     }
 
-    // 위시리스트 항목을 기반으로 주문 생성
+    // 위시리스트 항목을 기반으로 주문을 생성합니다.
     public Order createOrder(OrderRequest orderRequest) {
         Order order = new Order();
-        order = orderRepository.save(order);
-        orderRequest.getWishListItems().forEach(wishListItem -> {
-            Product product = wishListItem.getProduct();
-            Integer quantity = wishListItem.getQuantity();
-            product.setStock(product.getStock() - quantity);
-            productServiceClient.updateProduct(product.getId(), product);
-            wishListRepository.delete(wishListItem);
-        });
+        order.setMemberId(orderRequest.getMemberInfoDto().getId());
+        order.setOrderDate(LocalDate.now());
+        order.setStatus("배송중");
+        orderRepository.save(order);
+
+        for (WishListDTO item : orderRequest.getWishListItems()) {
+            ProductInfoDTO product = fetchProduct(item.getProductId());
+            product.setStock(product.getStock() - item.getQuantity());
+            productServiceClient.updateProduct(product);  // 업데이트 메서드 수정
+        }
+
         return order;
     }
 
-    // 주문 취소 처리
+    // 주문 취소 처리합니다.
     public Order cancelOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
@@ -80,46 +81,25 @@ public class OrderService {
             throw new RuntimeException("Cannot cancel order, already shipped");
         }
         order.setStatus("취소완료");
-        Product product = order.getProduct();
-        product.addStock(order.getQuantity());
-        productServiceClient.updateProduct(product.getId(), product);
         return orderRepository.save(order);
     }
 
-    // 반품
+    // 반품 처리합니다.
     public Order returnOrder(Long orderId) {
-        // 주문을 데이터베이스에서 조회합니다.
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-
-        // 주문 상태가 배송완료인지 확인합니다.
         if (!"배송완료".equals(order.getStatus())) {
             throw new RuntimeException("Cannot return order, not delivered");
         }
-
-        // 주문일로부터 1일이 경과했는지 확인합니다.
-        LocalDate deliveryDate = order.getOrderDate().plusDays(1);
-        if (!LocalDate.now().isAfter(deliveryDate)) {
-            throw new RuntimeException("Cannot return order, return period expired");
+        LocalDate returnDeadline = order.getOrderDate().plusDays(30);  // 반품 기한 설정
+        if (!LocalDate.now().isBefore(returnDeadline)) {
+            throw new RuntimeException("Return period expired");
         }
-
-        // 제품 정보를 가져옵니다.
-        Product product = productServiceClient.getProductById(order.getProduct().getId().toString())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + order.getProduct().getId()));
-
-        // 상품의 재고를 복구하고 제품 정보를 업데이트합니다.
-        product.addStock(order.getQuantity());
-        productServiceClient.updateProduct(product.getId(), product);
-
-        // 주문 상태를 반품완료로 변경합니다.
         order.setStatus("반품완료");
-
-        // 주문을 저장하고 반환합니다.
         return orderRepository.save(order);
     }
 
     public List<Order> getOrdersByStatus(String status) {
-        // 주문 상태로 주문 목록을 조회합니다.
         return orderRepository.findByStatus(status);
     }
 }

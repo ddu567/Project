@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-//@Repository
-@Component
+@Repository
+//@Component
 public interface RefreshRepository extends JpaRepository<Refresh, Long> {
 
     Boolean existsByRefresh(String refresh);

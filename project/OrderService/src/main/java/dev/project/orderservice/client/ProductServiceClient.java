@@ -1,21 +1,18 @@
 package dev.project.orderservice.client;
 
-import dev.project.productservice.entity.Product;
+import dev.project.orderservice.dto.ProductInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-@FeignClient(name = "productservice", url = "http://localhost:8082") // productService의 URL과 포트를 명시
+@FeignClient(name = "productservice", url = "http://localhost:8082")
 public interface ProductServiceClient {
 
     @GetMapping("/products/{id}")
-    Optional<Product> getProductById(@PathVariable("id") String productId);
+    Optional<ProductInfoDTO> getProductById(@PathVariable("id") Long productId);
 
     @PostMapping("/updateProduct")
-    Product updateProduct(@RequestBody Product product, @RequestParam("id") Long id);
-
-    @PutMapping("/products/{id}")
-    Product updateProduct(@PathVariable("id") Long id, @RequestBody Product product);
+    void updateProduct(@RequestBody ProductInfoDTO product);
 
 }

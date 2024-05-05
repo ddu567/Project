@@ -1,15 +1,14 @@
 package dev.project.orderservice.controller;
 
-
-import dev.project.userservice.entity.Member;
-import dev.project.productservice.entity.Product;
-import dev.project.orderservice.entity.WishList;
-import org.springframework.web.bind.annotation.*;
-import dev.project.userservice.service.MemberService;
+import dev.project.orderservice.client.MemberServiceClient;
+import dev.project.orderservice.client.ProductServiceClient;
+import dev.project.orderservice.dto.MemberInfoDTO;
+import dev.project.orderservice.dto.ProductInfoDTO;
+import dev.project.orderservice.dto.WishListDTO;
+import dev.project.orderservice.service.WishListService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import dev.project.productservice.service.ProductService;
-import dev.project.orderservice.service.WishListService;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,62 +18,63 @@ import java.util.Optional;
 public class WishListController {
 
     @Autowired
-    private MemberService memberService;
+    private MemberServiceClient memberServiceClient;
     @Autowired
-    private ProductService productService;
+    private ProductServiceClient productServiceClient;
     @Autowired
     private WishListService wishListService;
 
     // 장바구니 조회
     @GetMapping
-    public ResponseEntity<List<WishList>> getWishList(@RequestParam Long userId) {
-        Member member = new Member(); // 대신 유저 조회 로직 필요
-        member.setId(userId);
-        List<WishList> wishLists = wishListService.getWishListByUser(member);
+    public ResponseEntity<List<WishListDTO>> getWishList(@RequestParam Long userId) {
+        List<WishListDTO> wishLists = wishListService.getWishListByUser(userId);
         return ResponseEntity.ok(wishLists);
     }
 
     // 장바구니에 추가
     @PostMapping
-    public ResponseEntity<WishList> addWishList(@RequestParam Long userId, @RequestParam Long productId, @RequestParam Integer quantity) {
-        Optional<Member> memberOpt = memberService.findById(userId);
-        Optional<Product> productOpt = productService.findById(productId);
+    public ResponseEntity<WishListDTO> addWishList(@RequestParam Long userId, @RequestParam Long productId, @RequestParam Integer quantity) {
+        Optional<MemberInfoDTO> memberInfoOpt = Optional.ofNullable(memberServiceClient.getMemberById(userId));
+        Optional<ProductInfoDTO> productInfoOpt = productServiceClient.getProductById(productId);
 
-        if (!memberOpt.isPresent() || !productOpt.isPresent()) {
+        if (!memberInfoOpt.isPresent() || !productInfoOpt.isPresent()) {
             return ResponseEntity.notFound().build();
         }
 
-        // Optional 객체에서 직접 값 추출
-        Member member = memberOpt.get();
-        Product product = productOpt.get();
-
-        WishList wishList = wishListService.addToWishList(member, product, quantity);
+        WishListDTO wishList = wishListService.addToWishList(userId, productId, quantity);
         return ResponseEntity.ok(wishList);
+    }
+
+    // 제품 상세 조회
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<ProductInfoDTO> getProductDetails(@PathVariable Long productId) {
+        Optional<ProductInfoDTO> productInfoOpt = productServiceClient.getProductById(productId);
+        return productInfoOpt
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // 위시리스트 내 항목 수정
+    @PutMapping("/{wishListId}")
+    public ResponseEntity<WishListDTO> updateWishListItem(@PathVariable Long wishListId, @RequestParam Long productId, @RequestParam Integer newQuantity) {
+        Optional<ProductInfoDTO> productInfoOpt = productServiceClient.getProductById(productId);
+
+        if (!productInfoOpt.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        WishListDTO updatedWishListItem = wishListService.updateWishListItem(wishListId, productId, newQuantity);
+        return ResponseEntity.ok(updatedWishListItem);
     }
 
     // 장바구니 삭제
     @DeleteMapping("/{wishListId}")
     public ResponseEntity<?> removeWishList(@PathVariable Long wishListId) {
-        wishListService.removeFromWishList(wishListId);
-        return ResponseEntity.ok().build();
+        try {
+            wishListService.removeFromWishList(wishListId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
-
-    // 제품 상세 조회
-    @GetMapping("/product/{productId}")
-    public ResponseEntity<Product> getProductDetails(@PathVariable Long productId) {
-        Optional<Product> productOpt = productService.findById(productId);
-        return productOpt.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // 위시리스트 내 항목 수정
-    @PutMapping("/{wishListId}")
-    public ResponseEntity<WishList> updateWishListItem(@PathVariable Long wishListId,
-                                                       @RequestParam Long productId,
-                                                       @RequestParam Integer newQuantity) {
-        WishList updatedWishListItem = wishListService.updateWishListItem(wishListId, productId, newQuantity);
-        return ResponseEntity.ok(updatedWishListItem);
-    }
-
-
 }

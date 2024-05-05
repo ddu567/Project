@@ -3,6 +3,7 @@ package dev.project.productservice.service;
 import dev.project.productservice.entity.Product;
 import dev.project.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProductService {
 
+    @Autowired
     private final ProductRepository productRepository;
 
     public List<Product> listAllProducts() {

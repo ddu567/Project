@@ -1,12 +1,9 @@
 package dev.project.orderservice.dto;
 
-import dev.project.userservice.entity.Member;
-import dev.project.orderservice.entity.WishList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.util.List;
 
 @Getter
@@ -14,6 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderRequest {
-    private Member member;
-    private List<WishList> wishListItems;
+    private MemberInfoDTO memberInfoDto;  // 사용자 정보
+    private List<WishListDTO> wishListItems;  // 위시리스트 항목들
 }

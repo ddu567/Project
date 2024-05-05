@@ -1,7 +1,5 @@
 package dev.project.orderservice.entity;
 
-import dev.project.productservice.entity.Product;
-import dev.project.userservice.entity.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,14 +15,12 @@ public class WishList {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id")
-    private Member member;
+    @Column(name = "member_id")
+    private Long memberId; // 회원 ID 저장용 필드
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @Column(name = "product_id")
+    private Long productId; // 제품 ID 저장용 필드
 
-    private Integer quantity;
+    private Integer quantity; // 수량
 
 }

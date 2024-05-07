@@ -1,13 +1,10 @@
 package dev.project.orderservice.controller;
 
-import dev.project.orderservice.client.MemberServiceClient;
-import dev.project.orderservice.dto.MemberInfoDTO;
-import dev.project.orderservice.dto.OrderRequest;
-import dev.project.orderservice.dto.PurchaseRequest;
-import dev.project.orderservice.dto.WishListDTO;
+import dev.project.orderservice.client.ProductServiceClient;
+import dev.project.orderservice.client.UserServiceClient;
+import dev.project.orderservice.dto.*;
 import dev.project.orderservice.entity.Order;
 import dev.project.orderservice.service.OrderService;
-import dev.project.orderservice.service.WishListService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,25 +12,35 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/orders")
 public class OrderController {
     @Autowired
     private OrderService orderService;
     @Autowired
-    private WishListService wishListService;
+    private UserServiceClient userServiceClient;
     @Autowired
-    private MemberServiceClient memberServiceClient;
+    private ProductServiceClient productServiceClient; // 상품 서비스 클라이언트
 
-    // 위시리스트 구매하기
+    // 주문 생성 (재고 확인 후 생성)
     @PostMapping("/create")
-    public ResponseEntity<Order> createOrder(@RequestParam Long memberId) {
-        List<WishListDTO> wishListItems = wishListService.getWishListByUser(memberId);
-
+    public ResponseEntity<Order> createOrder(@RequestParam Long memberId, @RequestBody List<WishListDTO> wishListItems) {
         if (wishListItems.isEmpty()) {
-            return ResponseEntity.badRequest().body(null); // No items in wish list
+            return ResponseEntity.badRequest().body(null); // 장바구니가 비어 있음
         }
 
-        MemberInfoDTO memberInfo = memberServiceClient.getMemberById(memberId);
+        MemberInfoDTO memberInfo = userServiceClient.getMemberById(memberId);
+        if (memberInfo == null) {
+            return ResponseEntity.notFound().build(); // 회원 정보가 없는 경우
+        }
+
+        for (WishListDTO item : wishListItems) {
+            ProductInfoDTO productInfo = productServiceClient.getProductById(item.getProductId());
+            if (productInfo.getStock() < item.getQuantity()) {
+                return ResponseEntity.badRequest().body(null); // 재고 부족
+            }
+        }
+
+        // 주문 객체 생성 및 저장 로직
         OrderRequest orderRequest = new OrderRequest(memberInfo, wishListItems);
         Order order = orderService.createOrder(orderRequest);
         return ResponseEntity.ok(order);

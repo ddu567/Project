@@ -25,5 +25,5 @@ public class Order {
 
     private int quantity;
     private LocalDate orderDate;
-    private String status; // 예: "배송중", "배송완료", "취소완료", "반품완료"
+    private String status; // 예: "주문완료" "배송중", "배송완료", "취소완료", "반품완료"
 }

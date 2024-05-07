@@ -2,11 +2,12 @@ package dev.project.productservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-//@ComponentScan(basePackages = "dev.project.productservice")
-//@EnableJpaRepositories(basePackages = "dev.project.productservice.repository")
-//@EntityScan("dev.project.productservice.entity")
+@EnableFeignClients
+@EnableDiscoveryClient
 public class ProductServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(ProductServiceApplication.class, args);

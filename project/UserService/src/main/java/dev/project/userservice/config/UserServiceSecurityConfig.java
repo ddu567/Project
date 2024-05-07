@@ -25,7 +25,7 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class UserServiceSecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtUtil jwtUtil;
@@ -33,7 +33,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
 
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JwtUtil jwtUtil, RefreshRepository refreshRepository, CustomUserDetailsService customUserDetailsService) {
+    public UserServiceSecurityConfig(AuthenticationConfiguration authenticationConfiguration, JwtUtil jwtUtil, RefreshRepository refreshRepository, CustomUserDetailsService customUserDetailsService) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
         this.refreshRepository = refreshRepository;

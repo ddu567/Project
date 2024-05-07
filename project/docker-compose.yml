@@ -1,22 +1,28 @@
+version: '3.8'
 services:
-  # 서비스 명
   mysql:
-    # 사용할 이미지
     image: mysql:8.0
-    # 컨테이너 실행 시 재시작
     restart: always
-    # 컨테이너명 설정
     container_name: mysqlDB
-    # 접근 포트 설정 (컨테이너 외부:컨테이너 내부)
     ports:
       - "3306:3306"
-    # 환경 변수 설정
     environment:
       MYSQL_DATABASE: mysqlDB
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: 1234
       TZ: Asia/Seoul
-    # 볼륨 설정
     volumes:
       - ./db/mysql/data:/var/lib/mysql
       - ./db/mysql/config:/etc/mysql/conf.d
       - ./db/mysql/init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7.0
+    restart: always
+    container_name: redisDB
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./db/redis/data:/var/lib/redis
+      - ./db/redis/config:/usr/local/etc/redis/redis.conf

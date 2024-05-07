@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-@FeignClient(name = "productservice", url = "http://localhost:8082")
+@FeignClient(name = "product-service")
 public interface ProductServiceClient {
 
     @GetMapping("/products/{id}")
-    Optional<ProductInfoDTO> getProductById(@PathVariable("id") Long productId);
+    ProductInfoDTO getProductById(@PathVariable("id") Long productId);
 
     @PostMapping("/updateProduct")
     void updateProduct(@RequestBody ProductInfoDTO product);

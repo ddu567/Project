@@ -25,4 +25,5 @@ public class MemberDto {
 
     @NotBlank(message = "Address is required")
     private String address;
+
 }

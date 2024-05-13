@@ -9,5 +9,8 @@ import java.util.List;
 
 @Repository
 public interface WishListRepository extends JpaRepository<WishList, Long> {
+
+    // 회원별 위시리스트 조회
     List<WishList> findByMemberId(Long memberId);
+
 }

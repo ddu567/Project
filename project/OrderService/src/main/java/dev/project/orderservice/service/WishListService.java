@@ -1,51 +1,48 @@
 package dev.project.orderservice.service;
 
 import dev.project.orderservice.repository.WishListRepository;
-import dev.project.orderservice.client.ProductServiceClient;
 import dev.project.orderservice.dto.WishListDTO;
 import dev.project.orderservice.entity.WishList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
 public class WishListService {
-    private static final Logger logger = LoggerFactory.getLogger(WishListService.class);
 
     @Autowired
     private WishListRepository wishListRepository;
     @Autowired
-    private ProductServiceClient productServiceClient;
+    private CommonService commonService;
 
+    // 사용자의 위시리스트 조회
     public List<WishListDTO> getWishListByUser(Long memberId) {
-        logger.info("Fetching wishlist for member ID: {}", memberId);
         return wishListRepository.findByMemberId(memberId).stream()
                 .map(wl -> new WishListDTO(wl.getId(), wl.getProductId(), wl.getQuantity()))
                 .collect(Collectors.toList());
     }
 
+    // 위시리스트에 상품 추가
     public WishListDTO addToWishList(Long memberId, Long productId, Integer quantity) {
-        logger.info("Adding product {} quantity {} to wishlist of member {}", productId, quantity, memberId);
+        // 상품 정보 검증
+        commonService.getValidProduct(productId, quantity);
         WishList wishList = new WishList();
         wishList.setMemberId(memberId);
         wishList.setProductId(productId);
         wishList.setQuantity(quantity);
-        WishList savedWishList = wishListRepository.save(wishList);
-        return new WishListDTO(savedWishList.getId(), savedWishList.getProductId(), savedWishList.getQuantity());
+        wishList = wishListRepository.save(wishList);
+        return new WishListDTO(wishList.getId(), wishList.getProductId(), wishList.getQuantity());
     }
 
+    // 위시리스트 항목 삭제
     public void removeFromWishList(Long wishListId) {
-        logger.info("Removing wishlist item with ID: {}", wishListId);
         wishListRepository.deleteById(wishListId);
     }
 
+    // 위시리스트 항목 수정
     public WishListDTO updateWishListItem(Long wishListId, Long productId, Integer newQuantity) {
-        WishList wishList = wishListRepository.findById(wishListId)
-                .orElseThrow(() -> new NoSuchElementException("Wish list item not found with ID: " + wishListId));
+        WishList wishList = wishListRepository.findById(wishListId).orElseThrow(() -> new RuntimeException("Wish list item not found with ID: " + wishListId));
         wishList.setProductId(productId);
         wishList.setQuantity(newQuantity);
         wishList = wishListRepository.save(wishList);

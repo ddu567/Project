@@ -27,17 +27,4 @@ public class Product {
     private LocalDateTime availableFrom; // 예약 구매 시작 시간
     private LocalDateTime availableUntil; // 예약 구매 종료 시간
 
-    public void addStock(int quantity) {
-        this.stock += quantity;
-    }
-
-    public void removeStock(int quantity) {
-        int remainingStock = this.stock - quantity;
-        if (remainingStock < 0) {
-            throw new RuntimeException("Insufficient stock");
-        }
-        this.stock = remainingStock;
-    }
-
-
 }

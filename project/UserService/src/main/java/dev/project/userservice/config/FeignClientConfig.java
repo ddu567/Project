@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 @Configuration
 public class FeignClientConfig {
 
+    // 모든 Feign 클라이언트 요청에 JWT 인증 토큰을 추가하는 RequestInterceptor 빈을 생성합니다.
     @Bean
     public RequestInterceptor requestInterceptor() {
         return new RequestInterceptor() {

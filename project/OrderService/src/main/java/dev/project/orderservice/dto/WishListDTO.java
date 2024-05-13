@@ -10,7 +10,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WishListDTO {
+
     private Long id;
     private Long productId;
     private Integer quantity;
+
 }

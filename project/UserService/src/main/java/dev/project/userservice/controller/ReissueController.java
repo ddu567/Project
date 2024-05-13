@@ -22,12 +22,14 @@ public class ReissueController {
     private final JwtUtil jwtUtil;
     private final RefreshRepository refreshRepository;
 
+    // 생성자 주입을 통한 의존성 설정
     public ReissueController(JwtUtil jwtUtil, RefreshRepository refreshRepository) {
 
         this.jwtUtil = jwtUtil;
         this.refreshRepository = refreshRepository;
     }
 
+    // Refresh 토큰을 기반으로 새로운 접근 토큰을 발급하는 엔드포인트
     @PostMapping("/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
 
@@ -41,7 +43,7 @@ public class ReissueController {
                 refresh = cookie.getValue();
             }
         }
-
+        // Refresh 토큰 유효성 검사
         if (refresh == null) {
 
             //response status code
@@ -74,10 +76,8 @@ public class ReissueController {
             return new ResponseEntity<>("invalid refresh token", HttpStatus.BAD_REQUEST);
         }
 
-
+        // 새로운 JWT 생성 및 발급
         String email = jwtUtil.getEmail(refresh);
-
-        //make new JWT
         String newAccess = jwtUtil.createJwt("access", email, 600000L);
         String newRefresh = jwtUtil.createJwt("refresh", email, 86400000L);
 
@@ -89,21 +89,20 @@ public class ReissueController {
         response.setHeader("access", newAccess);
         response.addCookie(createCookie("refresh", newRefresh));
 
-
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    // 새로운 쿠키 생성
     private Cookie createCookie(String key, String value) {
 
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);
-        //cookie.setSecure(true);
-        //cookie.setPath("/");
+        cookie.setMaxAge(24 * 60 * 60);
         cookie.setHttpOnly(true);
 
         return cookie;
     }
 
+    // Refresh 토큰 정보를 DB에 저장
     private void addRefreshEntity(String username, String refresh, Long expiredMs) {
 
         Date date = new Date(System.currentTimeMillis() + expiredMs);
@@ -112,7 +111,7 @@ public class ReissueController {
         refreshEntity.setUsername(username);
         refreshEntity.setRefresh(refresh);
         refreshEntity.setExpiration(date.toString());
-
         refreshRepository.save(refreshEntity);
     }
+
 }

@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
+
+    // 사용자 상세 정보 조회 API를 호출하는 메서드
     @GetMapping("/users/{userId}")
     String getUserDetails(@PathVariable("userId") String userId);
 }

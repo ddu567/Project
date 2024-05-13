@@ -1,10 +1,10 @@
 package dev.project.orderservice.entity;
 
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDate;
 
 @Entity
@@ -25,5 +25,7 @@ public class Order {
 
     private int quantity;
     private LocalDate orderDate;
-    private String status; // 예: "주문완료" "배송중", "배송완료", "취소완료", "반품완료"
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status; // 상태 Enum 추가
 }

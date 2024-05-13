@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "product-service")
 public interface ProductServiceClient {
+
+    // 제품 ID를 통해 제품 상세 정보를 가져옵니다.
     @GetMapping("/products/{productId}")
     String getProductDetails(@PathVariable("productId") String productId);
+
 }

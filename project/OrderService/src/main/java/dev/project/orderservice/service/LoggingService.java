@@ -15,4 +15,5 @@ public class LoggingService {
     public void logInfo(String message) {
         logger.info(message);
     }
+
 }

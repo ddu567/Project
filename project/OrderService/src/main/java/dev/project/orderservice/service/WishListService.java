@@ -48,4 +48,5 @@ public class WishListService {
         wishList = wishListRepository.save(wishList);
         return new WishListDTO(wishList.getId(), wishList.getProductId(), wishList.getQuantity());
     }
+
 }

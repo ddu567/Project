@@ -4,7 +4,6 @@ import dev.project.orderservice.dto.*;
 import dev.project.orderservice.entity.Order;
 import dev.project.orderservice.entity.OrderStatus;
 import dev.project.orderservice.exception.OrderServiceException;
-import dev.project.orderservice.service.CommonService;
 import dev.project.orderservice.service.OrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +19,6 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
-    @Autowired
-    private CommonService commonService;
 
     // 주문 생성 API, 사용자 ID와 위시리스트를 기반으로 주문 생성
     @PostMapping("/create")
@@ -30,7 +27,7 @@ public class OrderController {
             if (orderRequest.getWishListItems().isEmpty()) {
                 return ResponseEntity.badRequest().body(ApiResponse.failure("위시리스트가 비어있습니다."));
             }
-            Order order = orderService.createOrder(orderRequest);
+            Order order = orderService.processOrder(orderRequest, null);
             return ResponseEntity.ok(ApiResponse.success(order));
         } catch (OrderServiceException e) {
             return ResponseEntity.status(e.getStatus()).body(ApiResponse.failure(e.getMessage()));
@@ -52,7 +49,7 @@ public class OrderController {
     @PostMapping("/purchase")
     public ResponseEntity<ApiResponse<Order>> purchaseProduct(@RequestBody PurchaseRequest purchaseRequest) {
         try {
-            Order order = orderService.purchaseProduct(purchaseRequest);
+            Order order = orderService.processOrder(null, purchaseRequest);
             return ResponseEntity.ok(ApiResponse.success(order));
         } catch (OrderServiceException e) {
             return ResponseEntity.status(e.getStatus()).body(ApiResponse.failure(e.getMessage()));

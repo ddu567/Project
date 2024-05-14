@@ -10,4 +10,5 @@ public class MemberInfoDTO {
     public Long getId() {
         return id;
     }
+
 }

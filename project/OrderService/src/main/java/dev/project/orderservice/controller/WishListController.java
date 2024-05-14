@@ -78,4 +78,5 @@ public class WishListController {
             return ResponseEntity.notFound().build();
         }
     }
+
 }

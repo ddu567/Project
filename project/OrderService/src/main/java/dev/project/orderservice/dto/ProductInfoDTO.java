@@ -14,4 +14,5 @@ public class ProductInfoDTO {
     private Long id;
     private String name;
     private int stock; // 재고 수량
+
 }

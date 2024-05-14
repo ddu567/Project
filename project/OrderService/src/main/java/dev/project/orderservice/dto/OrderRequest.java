@@ -14,4 +14,5 @@ public class OrderRequest {
 
     private MemberInfoDTO memberInfoDto;  // 사용자 정보
     private List<WishListDTO> wishListItems;  // 위시리스트 항목들
+
 }

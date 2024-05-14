@@ -1,11 +1,12 @@
 package dev.project.userservice.controller;
 
+import dev.project.userservice.dto.ChangePasswordRequest;
 import dev.project.userservice.dto.LoginRequest;
 import dev.project.userservice.dto.MemberDto;
 import dev.project.userservice.dto.UpdateMemberDto;
 import dev.project.userservice.entity.Member;
+import dev.project.userservice.security.AESUtil;
 import dev.project.userservice.security.JwtUtil;
-import dev.project.userservice.service.MailService;
 import dev.project.userservice.service.MemberService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,19 +32,21 @@ public class MemberController {
     private MemberService memberService;
 
     @Autowired
-    private MailService emailService;
-
-    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    // 회원가입
+    // 회원가입 처리
     @PostMapping("/signup")
-    public ResponseEntity<String> signUpProcess(@Valid @RequestBody MemberDto memberDto) {
-        memberService.registerNewMember(memberDto);
-        return ResponseEntity.ok("Signup successfully");
+    public ResponseEntity<String> signUp(@RequestBody MemberDto memberDto, @RequestParam String code) {
+        log.debug("회원가입 요청: 이메일={}, 코드={}", memberDto.getEmail(), code);
+        boolean isRegistered = memberService.registerNewMember(memberDto, code);
+        if (isRegistered) {
+            return ResponseEntity.ok("회원 등록이 성공적으로 완료되었습니다.");
+        }
+        log.debug("회원가입 실패: 잘못된 인증 코드");
+        return ResponseEntity.badRequest().body("잘못된 인증 코드입니다.");
     }
 
     // 로그인
@@ -51,10 +54,7 @@ public class MemberController {
     public ResponseEntity<String> signIn(@RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getEmail(),
-                            loginRequest.getPassword()
-                    )
+                    new UsernamePasswordAuthenticationToken(AESUtil.encrypt(loginRequest.getEmail()), loginRequest.getPassword())
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -64,7 +64,7 @@ public class MemberController {
             headers.add("Authorization", "Bearer " + jwt); // 'Bearer'는 토큰 유형을 명시합니다.
             return new ResponseEntity<>(jwt, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Login failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body("로그인 실패: " + e.getMessage());
         }
     }
 
@@ -82,5 +82,16 @@ public class MemberController {
     public ResponseEntity<Member> updateMember(@PathVariable String email, @RequestBody UpdateMemberDto updateMemberDto) {
         Member updatedMember = memberService.updateMember(email, updateMemberDto);
         return ResponseEntity.ok(updatedMember);
+    }
+
+    // 비밀번호 변경 요청 처리
+    @PatchMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+        boolean isChanged = memberService.changePassword(request.getEmail(), request.getOldPassword(), request.getNewPassword());
+        if (isChanged) {
+            return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("비밀번호 변경 실패: 잘못된 현재 비밀번호입니다.");
+        }
     }
 }

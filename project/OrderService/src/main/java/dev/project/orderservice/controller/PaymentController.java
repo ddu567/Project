@@ -59,4 +59,5 @@ public class PaymentController {
         LocalTime currentTime = LocalTime.now();
         return currentTime.isAfter(LocalTime.of(14, 0)); // 오후 2시 이후에 구매 활성화
     }
+
 }

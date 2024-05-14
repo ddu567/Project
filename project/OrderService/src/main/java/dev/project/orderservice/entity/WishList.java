@@ -11,6 +11,7 @@ import lombok.Setter;
 @Table(name = "WishList")
 @NoArgsConstructor
 public class WishList {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

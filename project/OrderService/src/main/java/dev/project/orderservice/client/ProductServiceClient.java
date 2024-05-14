@@ -18,4 +18,3 @@ public interface ProductServiceClient {
     void updateProduct(@PathVariable("id") Long id, @RequestBody ProductInfoDTO productInfo);
 
 }
-

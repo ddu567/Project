@@ -11,4 +11,5 @@ public interface UserServiceClient {
     // 특정 회원 ID를 기반으로 회원 정보를 조회
     @GetMapping("/members/{id}")
     MemberInfoDTO getMemberById(@PathVariable("id") Long id);
+
 }

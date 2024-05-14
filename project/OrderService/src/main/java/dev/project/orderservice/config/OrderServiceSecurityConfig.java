@@ -31,4 +31,5 @@ public class OrderServiceSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // 세션을 사용하지 않고 상태 없는 인증을 사용
         return http.build();
     }
+
 }

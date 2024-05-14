@@ -3,6 +3,7 @@ package dev.project.orderservice.exception;
 import org.springframework.http.HttpStatus;
 
 public class OrderServiceException extends RuntimeException {
+
     private HttpStatus status;
 
     public OrderServiceException(String message, HttpStatus status) {
@@ -13,4 +14,5 @@ public class OrderServiceException extends RuntimeException {
     public HttpStatus getStatus() {
         return status;
     }
+
 }

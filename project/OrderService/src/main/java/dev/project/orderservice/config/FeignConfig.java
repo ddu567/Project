@@ -12,4 +12,5 @@ public class FeignConfig {
         // 모든 요청과 응답의 세부 사항을 로그로 출력합니다.
         return Logger.Level.FULL;
     }
+
 }

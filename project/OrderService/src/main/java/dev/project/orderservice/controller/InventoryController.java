@@ -18,11 +18,12 @@ public class InventoryController {
     private InventoryService inventoryService;
 
     @PostMapping("/decrement")
-    public ResponseEntity<?> decrementStock(@RequestBody PurchaseRequest request) {
-        if (inventoryService.decrementStock(request.getProductId().toString(), request.getQuantity())) {
+    public ResponseEntity<?> manageStock(@RequestBody PurchaseRequest request) {
+        if (inventoryService.manageStock(request.getProductId(), request.getQuantity())) {
             return ResponseEntity.ok(ApiResponse.success("재고 감소 성공", null));
         } else {
             return ResponseEntity.badRequest().body(ApiResponse.failure("재고 부족"));
         }
     }
+
 }

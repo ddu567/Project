@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @Table(name = "Order_purchase")
 @NoArgsConstructor
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,4 +29,5 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status; // 상태 Enum 추가
+
 }

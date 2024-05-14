@@ -37,7 +37,7 @@ public class UserServiceSecurityConfig {
                 .httpBasic(auth -> auth.disable()) // 기본 HTTP 인증 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션을 사용하지 않는 상태로 설정
                 .authorizeRequests()
-                .requestMatchers("/api/public/**").permitAll() // "/api/public/**" 경로는 인증 없이 접근 허용
+                .requestMatchers("/", "/api/**").permitAll() // "/api/public/**" 경로는 인증 없이 접근 허용
                 .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 .and()
                 .addFilterBefore(new JwtFilter(jwtUtil, customUserDetailsService), UsernamePasswordAuthenticationFilter.class); // JwtFilter를 UsernamePasswordAuthenticationFilter 전에 추가

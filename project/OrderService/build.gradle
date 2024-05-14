@@ -12,13 +12,16 @@ ext {
     set('springCloudVersion', "2023.0.1")
 }
 dependencies {
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation project(':UserService')
     implementation project(':ProductService')
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework:spring-context'
-    implementation 'io.springfox:springfox-swagger2:2.9.2'
-    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
-    implementation 'org.springdoc:springdoc-openapi-ui:1.5.2'
+    implementation 'org.webjars:webjars-locator-core:0.58'
+    implementation 'io.github.classgraph:classgraph:4.8.172'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.8'
+    implementation 'org.springdoc:springdoc-openapi-webmvc-core:1.6.8'
+    implementation 'javax.servlet:javax.servlet-api:4.0.1'
+    implementation 'redis.clients:jedis:3.7.0'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }

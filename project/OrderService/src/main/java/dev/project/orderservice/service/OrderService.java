@@ -13,7 +13,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
@@ -21,24 +20,17 @@ import java.util.List;
 
 @Service
 public class OrderService {
+
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
-    private final ProductServiceClient productServiceClient;
+    private final CommonService commonService;
     private final OrderRepository orderRepository;
+    private final ProductServiceClient productServiceClient;
 
     @Autowired
-    public OrderService(ProductServiceClient productServiceClient, OrderRepository orderRepository) {
-        this.productServiceClient = productServiceClient;
+    public OrderService(CommonService commonService, OrderRepository orderRepository, ProductServiceClient productServiceClient) {
+        this.commonService = commonService;
         this.orderRepository = orderRepository;
-    }
-
-    // 상품 정보 및 재고 검증 통합 메서드
-    private ProductInfoDTO validateProduct(Long productId, Integer quantity) throws OrderServiceException {
-        ProductInfoDTO productInfo = productServiceClient.getProductById(productId);
-        if (productInfo == null || productInfo.getStock() < quantity) {
-            logger.error("상품 이용이 불가능하거나 재고가 부족합니다.");
-            throw new OrderServiceException("상품 이용이 불가능하거나 재고가 부족합니다.", HttpStatus.BAD_REQUEST);
-        }
-        return productInfo;
+        this.productServiceClient = productServiceClient;
     }
 
     // 주문 조회 메서드
@@ -47,42 +39,41 @@ public class OrderService {
                 .orElseThrow(() -> new OrderServiceException("주문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
     }
 
-    // 상품 구매 처리 메서드
+    // 주문 생성 및 상품 구매 처리 메서드
     @Transactional
-    public Order purchaseProduct(PurchaseRequest purchaseRequest) throws OrderServiceException {
-        Long productId = purchaseRequest.getProductId();
-        int quantity = purchaseRequest.getQuantity();
-
-        validateInput(productId, quantity);
-        ProductInfoDTO product = validateProduct(productId, quantity);
-
+    public Order processOrder(OrderRequest orderRequest, PurchaseRequest purchaseRequest) throws OrderServiceException {
         Order order = new Order();
-        order.setProductId(productId);
-        order.setQuantity(quantity);
-        order.setOrderDate(LocalDate.now());
-        order.setStatus(OrderStatus.SHIPPED);
-        productServiceClient.updateProduct(productId, product);
+        if (orderRequest != null) {
+            order.setMemberId(orderRequest.getMemberInfoDto().getId());
+            order.setOrderDate(LocalDate.now());
+            order.setStatus(OrderStatus.ORDERED);
+            orderRepository.save(order);
 
-        return orderRepository.save(order);
-    }
+            for (WishListDTO item : orderRequest.getWishListItems()) {
+                Long productId = item.getProductId();
+                int quantity = item.getQuantity();
+                validateInput(productId, quantity);
+                commonService.getValidProduct(productId, quantity);
 
-    // 위시리스트 기반 주문 생성 메서드
-    @Transactional
-    public Order createOrder(OrderRequest orderRequest) throws OrderServiceException {
-        Order order = new Order();
-        order.setMemberId(orderRequest.getMemberInfoDto().getId());
-        order.setOrderDate(LocalDate.now());
-        order.setStatus(OrderStatus.ORDERED);
-        orderRepository.save(order);
+                ProductInfoDTO product = productServiceClient.getProductById(productId);
+                productServiceClient.updateProduct(productId, product);
+            }
+        } else if (purchaseRequest != null) {
+            Long productId = purchaseRequest.getProductId();
+            int quantity = purchaseRequest.getQuantity();
 
-        for (WishListDTO item : orderRequest.getWishListItems()) {
-            Long productId = item.getProductId();
-            int quantity = item.getQuantity();
             validateInput(productId, quantity);
-            validateProduct(productId, quantity);
+            ProductInfoDTO product = commonService.getValidProduct(productId, quantity);
 
-            ProductInfoDTO product = productServiceClient.getProductById(productId);
+            order.setProductId(productId);
+            order.setQuantity(quantity);
+            order.setOrderDate(LocalDate.now());
+            order.setStatus(OrderStatus.SHIPPED);
             productServiceClient.updateProduct(productId, product);
+
+            orderRepository.save(order);
+        } else {
+            throw new OrderServiceException("주문 생성 또는 구매 요청 정보가 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
         return order;

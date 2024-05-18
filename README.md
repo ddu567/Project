@@ -27,3 +27,4 @@
 <img src="https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F97709cb5-46e9-448b-ad6e-4c22c8a31e96%2F5f15c7af-69e3-4dcc-bb26-7838cddedd76%2FdrawSQL-image-export-2024-05-16.png?table=block&id=5b19b059-bbb6-4189-846b-e524d5da2018&spaceId=97709cb5-46e9-448b-ad6e-4c22c8a31e96&width=2000&userId=2cdee0ef-ede8-4e55-90ce-85af03d7e14d&cache=v2" width="50%">
 
 ### 📃 API 명세
+[API 명세 보기](https://documenter.getpostman.com/view/34409747/2sA3JT3ykB) 
